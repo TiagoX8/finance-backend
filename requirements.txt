@@ -1,9 +1,10 @@
-fastapi
-uvicorn
-sqlalchemy
-psycopg2-binary
-python-dotenv
-pydantic
-python-jose[cryptography]
+alembic
 bcrypt
 email-validator
+fastapi
+psycopg2-binary
+pydantic
+python-dotenv
+python-jose[cryptography]
+sqlalchemy
+uvicorn
