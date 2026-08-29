@@ -1,11 +1,35 @@
 from datetime import date
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, EmailStr, Field
 
 
 TransactionType = Literal["income", "expense"]
 CategoryType = Literal["income", "expense"]
+
+# bcrypt rejeita entradas com mais de 72 bytes, e o limite é em bytes, não em
+# caracteres: uma senha de 40 caracteres acentuados já pode estourar.
+PASSWORD_MAX_BYTES = 72
+PASSWORD_MIN_LENGTH = 8
+
+
+def _check_password_bytes(value: str) -> str:
+    if len(value.encode("utf-8")) > PASSWORD_MAX_BYTES:
+        raise ValueError(f"A senha não pode ter mais de {PASSWORD_MAX_BYTES} bytes")
+
+    return value
+
+
+Email = Annotated[
+    EmailStr,
+    BeforeValidator(lambda v: v.strip().lower() if isinstance(v, str) else v),
+]
+
+Password = Annotated[
+    str,
+    Field(min_length=PASSWORD_MIN_LENGTH),
+    AfterValidator(_check_password_bytes),
+]
 
 
 class TransactionBase(BaseModel):
@@ -17,10 +41,11 @@ class TransactionBase(BaseModel):
 
 
 class TransactionCreate(TransactionBase):
-    pass
+    title: str = Field(min_length=1, max_length=120)
+    category: str = Field(min_length=1, max_length=80)
 
 
-class TransactionUpdate(TransactionBase):
+class TransactionUpdate(TransactionCreate):
     pass
 
 
@@ -37,10 +62,10 @@ class CategoryBase(BaseModel):
 
 
 class CategoryCreate(CategoryBase):
-    pass
+    name: str = Field(min_length=1, max_length=80)
 
 
-class CategoryUpdate(CategoryBase):
+class CategoryUpdate(CategoryCreate):
     pass
 
 
@@ -57,12 +82,14 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str
+    email: Email
+    name: str | None = Field(default=None, max_length=120)
+    password: Password
 
 
 class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+    email: Email
+    password: Annotated[str, AfterValidator(_check_password_bytes)]
 
 
 class UserResponse(UserBase):
