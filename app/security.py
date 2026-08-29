@@ -24,7 +24,20 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     password_bytes = password.encode("utf-8")
     hash_bytes = password_hash.encode("utf-8")
-    return bcrypt.checkpw(password_bytes, hash_bytes)
+
+    try:
+        return bcrypt.checkpw(password_bytes, hash_bytes)
+    except ValueError:
+        return False
+
+
+# Hash descartável usado para gastar o mesmo tempo de bcrypt quando o e-mail
+# não existe, evitando distinguir "usuário inexistente" de "senha errada".
+_DUMMY_HASH = bcrypt.hashpw(b"dummy-password", bcrypt.gensalt()).decode("utf-8")
+
+
+def waste_password_comparison() -> None:
+    verify_password("dummy-password-mismatch", _DUMMY_HASH)
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:

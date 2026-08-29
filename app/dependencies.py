@@ -22,15 +22,15 @@ def get_current_user(
             detail="Token inválido",
         )
 
-    user_id = payload.get("sub")
-
-    if not user_id:
+    try:
+        user_id = int(payload.get("sub", ""))
+    except (TypeError, ValueError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token inválido",
         )
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
         raise HTTPException(
