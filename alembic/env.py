@@ -1,4 +1,3 @@
-import os
 from logging.config import fileConfig
 
 from dotenv import load_dotenv
@@ -7,7 +6,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.database import Base
+from app.database import Base, get_database_url
 from app import models  # noqa: F401  (registra os models no metadata)
 
 load_dotenv()
@@ -21,10 +20,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if DATABASE_URL:
-    config.set_main_option("sqlalchemy.url", DATABASE_URL)
+config.set_main_option("sqlalchemy.url", get_database_url())
 
 target_metadata = Base.metadata
 
