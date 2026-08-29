@@ -25,6 +25,28 @@ Veja `.env.example`:
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | não | `1440` | Expiração do token de acesso. |
 | `ALLOWED_ORIGINS` | não | `http://localhost:5173` | Origens liberadas no CORS, separadas por vírgula. |
 
+## Deploy
+
+A imagem roda `alembic upgrade head` antes de subir o servidor (`entrypoint.sh`), então o schema é aplicado a cada release.
+
+```bash
+docker build -t finance-backend .
+docker run --rm -p 8000:8000 \
+  -e DATABASE_URL=postgresql://user:senha@host:5432/finance \
+  -e SECRET_KEY=... \
+  -e ALLOWED_ORIGINS=https://seu-frontend.com \
+  finance-backend
+```
+
+O servidor escuta em `$PORT` (padrão `8000`), o que atende provedores que injetam a porta (Render, Railway, Fly, Cloud Run). Para plataformas baseadas em buildpack existe também um `Procfile`, com as migrations na fase de `release`.
+
+Checklist do provedor:
+
+1. Provisionar um Postgres e usar a connection string dele em `DATABASE_URL` (`postgres://` também é aceito e normalizado).
+2. Definir `SECRET_KEY` como secret, com valor aleatório: `python -c "import secrets; print(secrets.token_urlsafe(48))"`. Trocar essa chave invalida todos os tokens emitidos.
+3. Definir `ALLOWED_ORIGINS` com o domínio exato do frontend (sem barra final); múltiplos domínios separados por vírgula.
+4. Apontar o healthcheck para `GET /health`.
+
 ## Migrations (Alembic)
 
 ```bash

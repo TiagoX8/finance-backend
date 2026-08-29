@@ -36,3 +36,8 @@ app.include_router(categories_router)
 @app.get("/")
 def root():
     return {"message": "Finance SaaS API running"}
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
